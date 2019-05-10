@@ -10,3 +10,9 @@ Demo.pkl
 *.hypno_pkl
 
 \.idea/
+
+
+env/
+narcovenv/
+ml/
+data/
