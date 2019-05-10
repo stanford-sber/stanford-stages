@@ -3,6 +3,8 @@
 
 *.pyc
 
+*.edf
+
 narco_detector.zip
 
 Demo.pkl
@@ -16,3 +18,4 @@ env/
 narcovenv/
 ml/
 data/
+
