@@ -5,10 +5,13 @@
 
 inf_narco_biomarker --> inf_narco_app
 """
+
+
 import json  # for command line interface input and output.
 import os
 import sys
 import warnings
+import re
 from datetime import datetime
 import pdb
 warnings.simplefilter('ignore', FutureWarning)  # warnings.filterwarnings("ignore")
@@ -20,8 +23,12 @@ import tensorflow as tf
 import gpflow as gpf
 import random
 
+import pyedflib
+
 # For hypnodensity plotting ...
 # matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('PS')
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Polygon
@@ -295,10 +302,52 @@ if __name__ == '__main__':
         else:
 
             edfFile = sys.argv[1]
+            # edfFile = '/Users/ashish/files/sber/stanford-stages/data/1451_edf_autostage_test.edf'
+
+
+            # find the appropriate channel indices
+            edfData = pyedflib.EdfReader(edfFile)
+            chan_labels = edfData.getSignalLabels()
+
+            # close file connection
+            edfData._close()
+            del edfData
+
+            c3_idx = str([i for i, item in enumerate(chan_labels) if re.search('[cC]3', item)][0])
+            c4_idx = str([i for i, item in enumerate(chan_labels) if re.search('[cC]4', item)][0])
+            o1_idx = str([i for i, item in enumerate(chan_labels) if re.search('[oO]1', item)][0])
+            o2_idx = str([i for i, item in enumerate(chan_labels) if re.search('[oO]2', item)][0])
+            eogl_idx = str([i for i, item in enumerate(chan_labels) if re.search('[eE]1', item)][0])
+            eogr_idx = str([i for i, item in enumerate(chan_labels) if re.search('[eE]2', item)][0])
+            chin_idx = str([i for i, item in enumerate(chan_labels) if re.search('chin|Chin', item)][0])
+
 
             # For hard coding/bypassing json input argument, uncomment the following:
-            # jsonObj = json.loads('{"channel_indices":{"centrals":[3,4],"occipitals":[5,6],"eog_l":7,"eog_r":8,"chin_emg":9}, "show":{"plot":false,"hypnodensity":false,"hypnogram":false}, "save":{"plot":false,"hypnodensity":true, "hypnogram":true}}')
-            jsonObj = json.loads(sys.argv[2])
+            jsonObj = json.loads('''
+                                 {{
+                                    "channel_indices":
+                                    {{
+                                        "centrals":[{c3},{c4}],"occipitals":[{o1},{o2}],"eog_l":{eogl},"eog_r":{eogr},"chin_emg":{chin}
+                                    }}, 
+                                    "show":
+                                    {{
+                                        "plot":false,"hypnodensity":false,"hypnogram":false
+                                    }}, 
+                                    "save":
+                                    {{
+                                        "plot":false,"hypnodensity":true, "hypnogram":true
+                                    }}
+                                 }}
+                                 '''.format(
+                c3=c3_idx,
+                c4=c4_idx,
+                o1=o1_idx,
+                o2=o2_idx,
+                eogl=eogl_idx,
+                eogr=eogr_idx,
+                chin=chin_idx
+            ))
+            # jsonObj = json.loads(sys.argv[2])
             try:
                 main(edfFile, jsonObj)
             except OSError as oserr:
@@ -307,3 +356,4 @@ if __name__ == '__main__':
 
     else:
         print(sys.argv[0], 'requires two arguments when run as a script')
+
